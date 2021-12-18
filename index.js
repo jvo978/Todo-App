@@ -29,12 +29,12 @@ async function getAllTodos() {
                 ...doc.data()
             })
         })
+        spanActiveListener();
         generateTodos(todos);
     })
 }
 
 function generateTodos(todos) {
-    spanActiveListener();
     let todosHTML = "";
     todos.forEach(todo => {
         todosHTML += 
@@ -54,9 +54,18 @@ function generateTodos(todos) {
 }
 
 async function showActiveTodos() {
-    const activeTodos = await db.collection("todo-items").where("status", "==", "active");
-    activeTodos.get().then(docs => {
-        console.log(docs)
+    await db.collection("todo-items")
+        .where("status", "==", "active")
+        .get()
+        .then(querySnapshot => {
+        let activeTodos = []
+        querySnapshot.forEach(todo => {
+            activeTodos.push({
+                id: todo.id,
+                ...todo.data()
+            })
+        })
+        generateTodos(activeTodos)
     })
 }
 
@@ -73,7 +82,7 @@ async function markCompleted(id) {
     const todo = await db.collection("todo-items").doc(id);
         todo.get().then(doc => {
             if (doc.exists) {
-                let status = doc.data().status
+                let status = doc.data().status;
                     if (status === "active") {
                         todo.update({
                             status: "completed"
